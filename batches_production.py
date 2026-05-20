@@ -39,13 +39,13 @@ def simulate_batch(settings):
     id, n_events = settings
     
     # Output Location
-    run_dir = output_base / f"core_{id}of{n_workers}-events_{n_events_total}"
+    run_dir = output_base / f"{id}-workers_{n_workers}-events_{n_events_total}"
     run_dir.mkdir(exist_ok=True)
         
     config.run.storage_prefix = str(run_dir)
     
     # Configuration
-    config.run.run_number = 10+id
+    config.run.run_number = id                  #by default is used as a seed
     #config.run.random_state_seed = 832796
     config.run.nevents = n_events
     config.run.summary_mode='debug'
@@ -83,6 +83,7 @@ def simulate_batch(settings):
     prometheus = Prometheus()
     prometheus.sim()
     
+    print(f"[Simulation saved in {str(run_dir)}]")
     del prometheus
     gc.collect()
     return (id,n_events)
@@ -90,11 +91,18 @@ def simulate_batch(settings):
 if __name__ == "__main__":
     start_time = time.time()
     
-    n_workers = 5                 #No of workers used
-    n_events_total = 20           #No of TOTAL events (will split into respective workers)
-    
+    n_workers = 2                 #No of workers used
+    n_events_total = 2            #No of TOTAL events (will split into respective workers)
+
+    # Checks if this combination of no of workers/events has been done before and changes the seed
+    check=0
+    run_dir = output_base / f"{check}-workers_{n_workers}-events_{n_events_total}"
+    while run_dir.exists():
+        check+=n_workers
+        run_dir = output_base / f"{check}-workers_{n_workers}-events_{n_events_total}"
+
     events_per_worker = int(n_events_total / n_workers)
-    pool_inputs = [(i, events_per_worker) for i in range(n_workers)]
+    pool_inputs = [(check+i, events_per_worker) for i in range(n_workers)]
     
     print(f"Spawning pool with {n_workers} workers...")
     
@@ -106,7 +114,7 @@ if __name__ == "__main__":
     print("Finished processes: %d" % len(results))
     time_diff = (time.time() - start_time) / 60
     print(
-        "simulated %s events in %s minutes using %s cores. \n Time pr. event pr. core is: %s"
+        "simulated %s events in %s minutes using %s workers. \n Time per event per core is: %s sec"
         % (instances_total, time_diff, n_workers, (instances_total / n_workers) / time_diff)
     )
     
