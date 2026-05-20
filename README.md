@@ -9,14 +9,16 @@ You should use the currently supported arguments to control the above:
 + the number of workers (--workers)
 + the total number of events (--total_events) or the number of events per worker (--events_per_worker) 
 + the energy range (--energy)
-
-  "lower" (1e2-1e6 GeV) or "upper" (1e6-1e9 GeV) energy range. Default is "full" range (1e2-1e6 GeV)
+  + "lower" (1e2-1e6 GeV)
+  + "upper" (1e6-1e9 GeV) energy range
+  + default is "full" range (1e2-1e6 GeV)
 + the zenith angle (--zenith)
-
-  "upgoing" or "downgoing" events. Default produces both
+  + "upgoing"
+  + "downgoing" events
+  + default produces both or "full"
 + the particle flavor (--flavor)
-
-  "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos
+  + "MuMinus" for muon neutrinos
+  + "NuEbar" for electron antineutrinos
 
 coordinate_change.py
 -
