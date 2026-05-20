@@ -6,11 +6,17 @@ produces neutrino simulations in batches. You may choose the amount of workers (
 
 You should use the currently supported arguments to control the above:
 
-+the number of workers (--workers)
-+the total number of events (--total_events) or the number of events per worker (--events_per_worker) 
-+the energy range (--energy)
-+the zenith angle (--zenith)
-+the particle flavor (--flavor)
++ the number of workers (--workers)
++ the total number of events (--total_events) or the number of events per worker (--events_per_worker) 
++ the energy range (--energy)
+
+  "lower" (1e2-1e6 GeV) or "upper" (1e6-1e9 GeV) energy range. Default is "full" range (1e2-1e6 GeV)
++ the zenith angle (--zenith)
+
+  "upgoing" or "downgoing" events. Default produces both
++ the particle flavor (--flavor)
+
+  "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos
 
 coordinate_change.py
 -
