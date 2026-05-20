@@ -40,26 +40,32 @@ p.add_argument(
     "--energy",
     choices=["lower", "full", "upper"],
     default="full",
-    help="Choose lower (1e2-1e6 GeV) or upper (1e6-1e9 GeV) energy range. Default is full range (1e2-1e6 GeV)",
+    help='Choose "lower" (1e2-1e6 GeV) or "upper" (1e6-1e9 GeV) energy range. Default is full range (1e2-1e6 GeV)'
 )
 p.add_argument(
     "--zenith",
     choices=["upgoing", "full", "downgoing"],
     default="full",
-    help="Choose upgoing or downgoing events. Default produces both."
+    help='Choose "upgoing" or "downgoing" events. Default produces both.'
     )
 p.add_argument(
     "--workers",
     type=int,
     help="Choose amount of workers"
     )
+p.add_argument(
+    "--flavor",
+    choices=["MuMinus", "NuEBar"],
+    default="MuMinus",
+    help='Primary lepton final state, choose "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos'
+)
 
 group = p.add_mutually_exclusive_group(required=True)
 
 group.add_argument(
     "--total_events",
     type=int,
-    help="Total number of events to simulate (split across workers)"
+    help="Total number of events to simulate (split across workers). Note that if the total number of events isn't a multiple of the number of workers, you may end up with fewer simulations than expected."
 )
 
 group.add_argument(
@@ -134,7 +140,7 @@ def simulate_batch(settings):
     #injection_config.simulation.cylinder_height = 3500 
     
     # final_state_1 either MuMinus or NuEBar
-    injection_config.simulation.final_state_1= "MuMinus"
+    injection_config.simulation.final_state_1= args.flavor
     injection_config.simulation.final_state_2= "Hadrons"
     
     print(f"[Worker {id}] starting simulation")
