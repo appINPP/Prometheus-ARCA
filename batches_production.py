@@ -16,6 +16,7 @@ import time
 from multiprocessing import Process, Pool
 from pathlib import Path
 from prometheus import Prometheus, config
+import argparse
 import gc
 
 # Prefer CPU JAX when available
@@ -31,6 +32,64 @@ REPO_ROOT = Path("/prometheusLink")
 output_base = REPO_ROOT / "output"
 output_base.mkdir(exist_ok=True)
 
+p = argparse.ArgumentParser(
+        description="Production in Batches",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
+p.add_argument(
+    "--energy",
+    choices=["lower", "full", "upper"],
+    default="full",
+    help="Choose lower (1e2-1e6 GeV) or upper (1e6-1e9 GeV) energy range. Default is full range (1e2-1e6 GeV)",
+)
+p.add_argument(
+    "--zenith",
+    choices=["upgoing", "full", "downgoing"],
+    default="full",
+    help="Choose upgoing or downgoing events. Default produces both."
+    )
+p.add_argument(
+    "--workers",
+    type=int,
+    help="Choose amount of workers"
+    )
+
+group = p.add_mutually_exclusive_group(required=True)
+
+group.add_argument(
+    "--total_events",
+    type=int,
+    help="Total number of events to simulate (split across workers)"
+)
+
+group.add_argument(
+    "--events_per_worker",
+    type=int,
+    help="Events per worker"
+)
+
+EN_RANGES = {
+    "lower": (1e2, 1e6),
+    "full":  (1e2, 1e9),
+    "high":  (1e6, 1e9),
+}
+ZE_RANGES = {
+    "upgoing": (0, 90),
+    "full":   (0, 180),
+    "downgoing":  (90, 180),
+}
+args = p.parse_args()
+
+# Parameters
+emin, emax = EN_RANGES[args.energy]
+zenmin, zenmax = ZE_RANGES[args.zenith]
+
+n_workers = args.workers
+if args.total_events is not None:
+    events_per_worker = int(int(args.total_events) / n_workers)
+else:
+    events_per_worker = int(args.events_per_worker)
+
 #Detector Setup
 geofile= str(REPO_ROOT / "resources" / "geofiles" / "arca.geo")
 config.detector.geo_file = geofile
@@ -39,13 +98,13 @@ def simulate_batch(settings):
     id, n_events = settings
     
     # Output Location
-    run_dir = output_base / f"{id}-workers_{n_workers}-events_{n_events_total}"
+    run_dir = output_base / f"{id}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
     run_dir.mkdir(exist_ok=True)
         
     config.run.storage_prefix = str(run_dir)
     
     # Configuration
-    config.run.run_number = id                  #by default is used as a seed
+    config.run.run_number = id                  #by default is used as seed
     #config.run.random_state_seed = 832796
     config.run.nevents = n_events
     config.run.summary_mode='debug'
@@ -63,11 +122,11 @@ def simulate_batch(settings):
     injection_config = config["injection"][injector]
     
     # 0 degrees for upgoing, 180 for downgoing
-    injection_config.simulation.min_zenith= 0 #degrees
-    injection_config.simulation.max_zenith= 90 #degrees
+    injection_config.simulation.min_zenith= zenmin
+    injection_config.simulation.max_zenith= zenmax
     
-    injection_config.simulation.minimal_energy = 1e6
-    injection_config.simulation.maximal_energy = 1e9
+    injection_config.simulation.minimal_energy = emin
+    injection_config.simulation.maximal_energy = emax
     injection_config.simulation.gamma = 1.4
     
     #injection_config.simulation.is_ranged = False
@@ -91,17 +150,13 @@ def simulate_batch(settings):
 if __name__ == "__main__":
     start_time = time.time()
     
-    n_workers = 2                 #No of workers used
-    n_events_total = 2            #No of TOTAL events (will split into respective workers)
-
     # Checks if this combination of no of workers/events has been done before and changes the seed
     check=0
-    run_dir = output_base / f"{check}-workers_{n_workers}-events_{n_events_total}"
+    run_dir = output_base / f"{check}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
     while run_dir.exists():
         check+=n_workers
-        run_dir = output_base / f"{check}-workers_{n_workers}-events_{n_events_total}"
+        run_dir = output_base / f"{check}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
 
-    events_per_worker = int(n_events_total / n_workers)
     pool_inputs = [(check+i, events_per_worker) for i in range(n_workers)]
     
     print(f"Spawning pool with {n_workers} workers...")
