@@ -2,17 +2,15 @@
 
 batches_production.py
 -
-produces neutrino simulations in batches. You may choose the amount of workers (n_workers) and the total number of simulated events (n_events_total). Note that if the total number of events isn't a multiple of the number of workers, you may end up with fewer simulations than expected. You may also select the flavour by choosing the final_state_1 to be "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos. The initial zenith angle can be adjusted, with 0 degrees corresponding to upgoing events and 180 degrees to downgoing. Simulated events are saved in the output file inside Prometheus in parquet format.
+produces neutrino simulations in batches. You may choose the amount of workers (n_workers) and the number of simulated events  in total (n_events_total) or per worker (n_events_per_worker). Note that if the total number of events isn't a multiple of the number of workers, you may end up with fewer simulations than expected. You may also select the flavour by choosing the final_state_1 to be "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos. The initial zenith angle can be adjusted, with 0 degrees corresponding to upgoing events and 180 degrees to downgoing. Simulated events are saved in the output file inside Prometheus in parquet format.
 
-You should use the currently supported arguments to control:
+You should use the currently supported arguments to control the above:
 
-the number of workers (--workers)
-
-the total number of events (--total_events) or the number of events per worker (--events_per_worker) 
-
-the energy range (--energy)
-
-the zenith angle (--zenith)
++the number of workers (--workers)
++the total number of events (--total_events) or the number of events per worker (--events_per_worker) 
++the energy range (--energy)
++the zenith angle (--zenith)
++the particle flavor (--flavor)
 
 coordinate_change.py
 -
