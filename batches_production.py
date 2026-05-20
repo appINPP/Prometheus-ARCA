@@ -1,6 +1,4 @@
-# example_batches.py
 # Example for python multithreading
-# imports
 
 import os
 
@@ -13,7 +11,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 # Safer JAX/XLA memory behavior
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 os.environ["XLA_PYTHON_CLIENT_ALLOCATOR"] = "platform"
-
+# imports
 import time
 from multiprocessing import Process, Pool
 from pathlib import Path
@@ -27,7 +25,8 @@ try:
     jconfig.update("jax_platform_name", "cpu")
 except Exception:
     pass
-    
+
+#Paths
 REPO_ROOT = Path("/prometheusLink")
 output_base = REPO_ROOT / "output"
 output_base.mkdir(exist_ok=True)
@@ -40,8 +39,6 @@ def simulate_batch(settings):
     id, n_events = settings
     
     # Output Location
-    
-    
     run_dir = output_base / f"core_{id}of{n_workers}-events_{n_events_total}"
     run_dir.mkdir(exist_ok=True)
         
@@ -55,7 +52,7 @@ def simulate_batch(settings):
     #config.run.verbosity='DEBUG'
     
     """
-    # Splits the detector to use less memory
+    # Splits the detector to use less memory, default is 10000
     config.photon_propagator.name="olympus"
     config.photon_propagator.olympus.simulation.splitter=1000000000000
     """
@@ -93,8 +90,8 @@ def simulate_batch(settings):
 if __name__ == "__main__":
     start_time = time.time()
     
-    n_workers = 5
-    n_events_total = 20
+    n_workers = 5                 #No of workers used
+    n_events_total = 20           #No of TOTAL events (will split into respective workers)
     
     events_per_worker = int(n_events_total / n_workers)
     pool_inputs = [(i, events_per_worker) for i in range(n_workers)]
