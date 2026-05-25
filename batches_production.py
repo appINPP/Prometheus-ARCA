@@ -8,9 +8,11 @@ os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
+"""
 # Safer JAX/XLA memory behavior
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 os.environ["XLA_PYTHON_CLIENT_ALLOCATOR"] = "platform"
+"""
 
 # imports
 import time
@@ -28,7 +30,7 @@ try:
 except Exception:
     pass
 
-#Paths
+# Paths
 REPO_ROOT = Path("/prometheusLink")
 output_base = REPO_ROOT / "output"
 output_base.mkdir(exist_ok=True)
@@ -97,7 +99,7 @@ if args.total_events is not None:
 else:
     events_per_worker = int(args.events_per_worker)
 
-#Detector Setup
+# Detector Setup
 geofile= str(REPO_ROOT / "resources" / "geofiles" / "arca.geo")
 config.detector.geo_file = geofile
 
@@ -105,7 +107,7 @@ def simulate_batch(settings):
     id, n_events = settings
     
     # Output Location
-    run_dir = output_base / f"{id}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
+    run_dir = output_base / f"f_{args.flavor}-{id}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
     run_dir.mkdir(exist_ok=True)
         
     config.run.storage_prefix = str(run_dir)
@@ -136,9 +138,10 @@ def simulate_batch(settings):
     injection_config.simulation.maximal_energy = emax
     injection_config.simulation.gamma = 1.4
     
-    #injection_config.simulation.is_ranged = False
-    #injection_config.simulation.cylinder_radius = 800 
-    #injection_config.simulation.cylinder_height = 3500 
+    if args.flavor=="NuEBar":
+        injection_config.simulation.is_ranged = False
+        injection_config.simulation.cylinder_radius = 800 
+        injection_config.simulation.cylinder_height = 3500 
     
     # final_state_1 either MuMinus or NuEBar
     injection_config.simulation.final_state_1= args.flavor
@@ -167,10 +170,10 @@ if __name__ == "__main__":
     
     # Checks if this combination of no of workers/events has been done before and changes the seed
     check=0
-    run_dir = output_base / f"{check}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
+    run_dir = output_base / f"f_{args.flavor}-{check}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
     while run_dir.exists():
         check+=n_workers
-        run_dir = output_base / f"{check}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
+        run_dir = output_base / f"f_{args.flavor}-{check}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
 
     pool_inputs = [(check+i, events_per_worker) for i in range(n_workers)]
     
