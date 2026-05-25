@@ -11,6 +11,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 # Safer JAX/XLA memory behavior
 os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
 os.environ["XLA_PYTHON_CLIENT_ALLOCATOR"] = "platform"
+
 # imports
 import time
 from multiprocessing import Process, Pool
@@ -77,7 +78,7 @@ group.add_argument(
 EN_RANGES = {
     "lower": (1e2, 1e6),
     "full":  (1e2, 1e9),
-    "high":  (1e6, 1e9),
+    "upper":  (1e6, 1e9),
 }
 ZE_RANGES = {
     "upgoing": (0, 90),
@@ -153,6 +154,14 @@ def simulate_batch(settings):
     gc.collect()
     return (id,n_events)
 
+import multiprocessing
+def init_worker():
+    process = multiprocessing.current_process()
+    worker_idx = process._identity[0] - 1
+
+    # Pin worker to one CPU core
+    os.sched_setaffinity(0, {worker_idx})
+
 if __name__ == "__main__":
     start_time = time.time()
     
@@ -167,7 +176,7 @@ if __name__ == "__main__":
     
     print(f"Spawning pool with {n_workers} workers...")
     
-    with Pool(processes=n_workers, maxtasksperchild=1) as pool:
+    with Pool(processes=n_workers, initializer=init_worker, maxtasksperchild=1) as pool:
         results = pool.map(simulate_batch, pool_inputs)
         
     instances_total = sum(events for worker_id, events in results)
