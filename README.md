@@ -2,9 +2,7 @@
 
 batches_production.py
 -
-produces neutrino simulations in batches in separate cores. You may choose the amount of workers (n_workers) and the number of simulated events in total (n_events_total) or per worker (n_events_per_worker). Simulated events are saved in the output file inside Prometheus in parquet format.
-
-You should use the supported arguments to control:
+produces neutrino simulations in batches in separate cores. Simulated events are saved in the output file inside Prometheus in parquet format. You should use the supported arguments to control:
 
 + the number of workers (--workers)
 + the total number of events (--total_events) or the number of events per worker (--events_per_worker). Note that if you use total number of events and your number isn't a multiple of the amount of workers, you may end up with slightly fewer simulations than expected.
