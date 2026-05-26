@@ -2,23 +2,23 @@
 
 batches_production.py
 -
-produces neutrino simulations in batches. You may choose the amount of workers (n_workers) and the number of simulated events  in total (n_events_total) or per worker (n_events_per_worker). Note that if the total number of events isn't a multiple of the number of workers, you may end up with fewer simulations than expected. You may also select the flavour by choosing the final_state_1 to be "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos. The initial zenith angle can be adjusted, with 0 degrees corresponding to upgoing events and 180 degrees to downgoing. Simulated events are saved in the output file inside Prometheus in parquet format.
+produces neutrino simulations in batches in separate cores. You may choose the amount of workers (n_workers) and the number of simulated events in total (n_events_total) or per worker (n_events_per_worker). Simulated events are saved in the output file inside Prometheus in parquet format.
 
-You should use the currently supported arguments to control the above:
+You should use the supported arguments to control:
 
 + the number of workers (--workers)
-+ the total number of events (--total_events) or the number of events per worker (--events_per_worker) 
++ the total number of events (--total_events) or the number of events per worker (--events_per_worker). Note that if you use total number of events and your number isn't a multiple of the amount of workers, you may end up with slightly fewer simulations than expected.
 + the energy range (--energy)
-  + "lower" (1e2-1e6 GeV)
-  + "upper" (1e6-1e9 GeV) energy range
-  + default is "full" range (1e2-1e6 GeV)
-+ the zenith angle (--zenith)
-  + "upgoing"
+  + "lower" (1e2-1e6 GeV) 
+  + "upper" (1e6-1e9 GeV) 
+  + default is "full" (1e2-1e9 GeV)
++ the zenith angle (--zenith) for
+  + "upgoing" or
   + "downgoing" events
   + default produces both or "full"
 + the particle flavor (--flavor)
-  + "MuMinus" for muon neutrinos
-  + "NuEbar" for electron antineutrinos
+  + "MuMinus" for muon neutrinos by default, which uses ranged injection
+  + "NuEbar" for electron antineutrinos, which uses an injection cylinder
 
 coordinate_change.py
 -
