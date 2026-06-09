@@ -136,7 +136,7 @@ def simulate_batch(settings):
     
     injection_config.simulation.minimal_energy = emin
     injection_config.simulation.maximal_energy = emax
-    injection_config.simulation.gamma = 1.4
+    injection_config.simulation.power_law = 1.4
     
     if args.flavor=="NuEBar":
         injection_config.simulation.is_ranged = False
