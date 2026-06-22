@@ -124,10 +124,9 @@ def simulate_batch(settings):
     injection_config.simulation.maximal_energy = emax
     injection_config.simulation.power_law = 1.4
     
-    if args.flavor=="NuEBar":
-        injection_config.simulation.is_ranged = False
-        injection_config.simulation.cylinder_radius = 800 
-        injection_config.simulation.cylinder_height = 3500 
+    injection_config.simulation.is_ranged = False
+    injection_config.simulation.cylinder_radius = 805 
+    injection_config.simulation.cylinder_height = 1404 
     
     # final_state_1 either MuMinus or NuEBar
     injection_config.simulation.final_state_1= args.flavor
