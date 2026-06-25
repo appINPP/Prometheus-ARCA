@@ -18,7 +18,7 @@ from tqdm import tqdm
 
 from .config import config
 from .detector import Detector
-from .injection import INJECTION_CONSTRUCTOR_DICT, RegisteredInjectors
+from .injection import INJECTORS, RegisteredInjectors
 from .logging.handlers import LogCounterHandler
 from .logging_config import configure_logging
 from .photon_propagation import (
@@ -36,11 +36,6 @@ from .utils import (
 )
 from .utils.capture import _COutputCapture
 from .utils.timing import time_block
-
-try:
-    from .job_db import mark_done
-except ImportError:
-    mark_done = None
 
 # Legacy alias used in this file.
 get_photon_propagator = get_propagator
@@ -73,10 +68,8 @@ def regularize(s: str) -> str:
         String to regularize.
 
     Returns
-
     -------
     str
-
         Regularized string.
     """
     s = s.replace(" ", "")
@@ -97,20 +90,15 @@ class Prometheus(object):
         ----------
         userconfig : dict or str or None
             Configuration dictionary or path to YAML file specifying configuration.
-
         detector : Detector or None
             Detector to be used or path to geo file to load detector from. If omitted,
-
             the path from ``userconfig["detector"]["geo file"]`` will be loaded.
 
         Raises
         ------
         UnknownInjectorError
-
             If the injector specified in the config is unknown.
-
         UnknownPhotonPropagatorError
-
             If the photon propagator specified in the config is unknown.
         CannotLoadDetectorError
             If no detector is provided and no geo file path is provided in config.
@@ -321,23 +309,25 @@ class Prometheus(object):
             injection_config.inject,
         )
         with time_block("injection", logger):
+            if self._injector not in INJECTORS:
+                raise InjectorNotImplementedError(
+                    str(self._injector) + " is not a registered injector"
+                )
+            plugin = INJECTORS[self._injector]
             if injection_config.inject:
-                from .injection import INJECTOR_DICT
-
-                if self._injector not in INJECTOR_DICT.keys():
-                    raise InjectorNotImplementedError(
-                        str(self._injector) + " is not a registered injector"
-                    )
-
                 injection_config.simulation.random_state_seed = config.run.random_state_seed
-                INJECTOR_DICT[self._injector](
+                plugin.runner(
                     injection_config.paths,
                     injection_config.simulation,
                     detector_offset=self.detector.offset,
+                    detector=self._detector,
                 )
             try:
-                self._injection = INJECTION_CONSTRUCTOR_DICT[self._injector](
-                    injection_config.paths.injection_file
+                self._injection = plugin.constructor(
+                    injection_config.paths.injection_file,
+                    simulation_config=injection_config.simulation,
+                    detector=self._detector,
+                    detector_offset=self.detector.offset,
                 )
             except Exception:
                 logger.exception(
@@ -354,7 +344,7 @@ class Prometheus(object):
             injection_config.paths.injection_file,
         )
 
-    # We should factor out generating losses and photon prop
+        # We should factor out generating losses and photon prop
     def propagate(self, capture=False, event_ids=None):
         """Calculate energy losses, generate photon yields, and propagate photons."""
         self._last_event_ids = event_ids
@@ -533,7 +523,7 @@ class Prometheus(object):
         logger.info("Simulation run complete")
         # Timing array: misc, inj, prop, out
         self._timing_arr = np.array(
-            [
+                [
                 self._end_timing_misc - self._start_timing_misc,
                 self._end_inj - self._start_inj,
                 self._end_prop - self._start_prop,
@@ -550,7 +540,7 @@ class Prometheus(object):
             )
         except Exception:
             pass
-    
+
     def construct_output(self):
         #Construct a parquet file with metadata from the generated files.
 
@@ -645,4 +635,4 @@ class Prometheus(object):
                 warnings.showwarning = self._orig_showwarning
         except Exception:
             pass
-        # Avoid using logging during interpreter shutdown in __del__.
+        # Avoid using logging during interpreter shutdown in __del__.  
