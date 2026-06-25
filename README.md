@@ -26,7 +26,7 @@ split production
 -
 allows to do the neutrino injection separately and choose later on to produce filtered high energy or low energy events (over/under 1 PeV). To run the code one should call upon MOD_prometheus.py to run simulations instead of the normal prometheus.py provided by the initial code. To set the event distributor to use later on, run the code job_db.py once.
 
-You can create the injection files with injection.py with the same arguments used in batches_production.py. This also creates a folder named by the event type and a subfolder named "injection files" to store them in.
+You can create the injection files with injection.py with the same arguments used in batches_production.py, though they will only use an injection cylinder. This also creates a folder named by the event type and a subfolder named "injection files" to store them in.
 
 To run the simulations you should first initialize the event distributor through init_propagation.py for your spcecific file found by the arguments of event type (--flavor) and (--id), the identification number used for the injection file. Once that's set you can run the propagation.py code to create simulations while using arguments such as --flavor, --file_id, --workers, --events_per_worker and --energy with inputs high or low depending on what energy events you want to propagate. Parquet files will be saved inside the event type folder inside the subfolder named "simulation_files". Good luck!
 
