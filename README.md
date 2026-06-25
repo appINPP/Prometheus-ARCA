@@ -24,7 +24,7 @@ overwrites the original arca.geo file with the corrected coordinates for Prometh
 
 split production
 -
-allows to do the neutrino injection separately and choose later on to produce filtered high energy or low energy events (over/under 1 PeV). To run the code one should call upon MOD_prometheus.py to run simulations instead of the normal prometheus.py provided by the initial code. To set the event distributor to use later on, run the code job_db.py once.
+allows to do the neutrino injection separately in full energy range and choose later on to produce filtered high or low energy events (over/under 1 PeV). To run the code one should call upon MOD_prometheus.py to run simulations instead of the normal prometheus.py provided by the initial code. To set the event distributor to use later on, run the code job_db.py once.
 
 You can create the injection files with injection.py with the same arguments used in batches_production.py, though they will only use an injection cylinder. This also creates a folder named by the event type and a subfolder named "injection files" to store them in.
 
