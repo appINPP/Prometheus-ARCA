@@ -1,5 +1,6 @@
 import h5py
 from job_db import init_db, insert_events
+from pathlib import Path
 
 import argparse
 p = argparse.ArgumentParser(
@@ -19,8 +20,9 @@ p.add_argument(
 )
 args = p.parse_args()
 
+REPO_ROOT=Path.home()/"prometheus"
 DB_PATH = "jobs.db"
-H5_FILE = f"/prometheusLink/output/{args.flavor}/injection_files/{args.file_id}_LI_output.h5"
+H5_FILE = f"{REPO_ROOT}/output/{args.flavor}/injection_files/{args.file_id}_LI_output.h5"
 
 ENERGY_THRESHOLD = 1e6  # 1 PeV
 
