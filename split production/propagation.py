@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from prometheus import Prometheus, config
+from MOD_prometheus import Prometheus, config
 from job_db import claim_events
 import gc
 from prometheus.config import config
