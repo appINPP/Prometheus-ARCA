@@ -93,7 +93,7 @@ else:
     events_per_worker = int(args.events_per_worker)
     
 # Paths
-REPO_ROOT = Path("/prometheusLink")
+REPO_ROOT = Path.home()/"prometheus"
 output_base = REPO_ROOT / "output"/ f"{args.flavor}" /"injection_files"
 output_base.mkdir(parents=True, exist_ok=True)
 
