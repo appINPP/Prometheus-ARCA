@@ -1,8 +1,8 @@
 # Prometheus-ARCA
 
-This repository offers additional codes for Prometheus, in order to produce neutrino simulations in ARCA. You can find production and additional scripts.
+This repository offers additional codes for Prometheus, in order to produce neutrino simulations for ARCA. You can find production and additional scripts.
 
-## Production
+## Production Codes
 
 ### batches_production.py
 produces neutrino simulations in batches in separate cores. Simulated events are saved in the output file inside Prometheus in parquet format. You should use the supported arguments to control:
@@ -22,11 +22,7 @@ produces neutrino simulations in batches in separate cores. Simulated events are
   + "NuEbar" for electron antineutrinos, which uses an injection cylinder
 
 ### split production
-allows to do the neutrino injection separately in full energy range and choose later on to produce filtered high or low energy events (over/under 1 PeV). To run the code one should call upon MOD_prometheus.py to run simulations instead of the normal prometheus.py provided by the initial code. We suggest to move it to the respective file and name it as "prometheus.py" to avoid compatibility issues. To set the event distributor to use later on, run the code job_db.py once.
-
-You can create the injection files with injection.py with the same arguments used in batches_production.py, though they will only use an injection cylinder. This also creates a folder named by the event type and a subfolder named "injection files" to store them in.
-
-To run the simulations you should first initialize the event distributor through init_propagation.py for your spcecific file found by the arguments of event type (--flavor) and (--id) which is the identification number used for the injection file. Once that's set you can run the propagation.py code to create simulations while using arguments such as --flavor, --file_id, --workers, --events_per_worker and --energy with inputs high or low depending on what energy events you want to propagate. Parquet files will be saved inside the event type folder inside the subfolder named "simulation_files". Good luck!
+allows to do separately the neutrino injection in full range (100 GeV-1 EeV) and then choose to propagate low or high energy events. You can find more information [here](split%20production/README.md)
 
 ## Additional Codes
 
