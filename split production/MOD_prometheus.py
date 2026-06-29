@@ -37,6 +37,11 @@ from .utils import (
 from .utils.capture import _COutputCapture
 from .utils.timing import time_block
 
+try:
+    from .job_db import mark_done
+except ImportError:
+    mark_done = None
+
 # Legacy alias used in this file.
 get_photon_propagator = get_propagator
 
