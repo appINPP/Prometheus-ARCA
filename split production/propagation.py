@@ -52,7 +52,7 @@ p.add_argument(
 )
 args = p.parse_args()
 
-REPO_ROOT = Path.home()/prometheus
+REPO_ROOT = Path.home()/"prometheus"
 DB_PATH = "jobs.db"
 H5_FILE = f"{REPO_ROOT}/output/{args.flavor}/injection_files/{args.id}_LI_output.h5"
 
