@@ -54,7 +54,7 @@ args = p.parse_args()
 
 REPO_ROOT = Path.home()/prometheus
 DB_PATH = "jobs.db"
-H5_FILE = f"{REPO_ROOT}/output/{args.flavor}/injection_files/{args.file_id}_LI_output.h5"
+H5_FILE = f"{REPO_ROOT}/output/{args.flavor}/injection_files/{args.id}_LI_output.h5"
 
 def simulate_batch(worker_id):
     bin_name = args.energy 
@@ -93,7 +93,7 @@ def simulate_batch(worker_id):
         # Unique output name per batch and per core 
         parq_dir=REPO_ROOT / "output" / f"{args.flavor}"/ "simulation_files"
         parq_dir.mkdir(parents=True, exist_ok=True)
-        out_name = str(parq_dir/f"{args.file_id}-core{worker_id}-en_{bin_name}-batch{event_ids[0]}-{event_ids[-1]}.parquet")
+        out_name = str(parq_dir/f"{args.id}-en_{bin_name}-core{worker_id}-batch{event_ids[0]}-{event_ids[-1]}.parquet")
         
         config.run.outfile = str(out_name)
        
