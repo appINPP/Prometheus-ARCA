@@ -30,14 +30,14 @@ p.add_argument(
     help='Primary lepton final state, choose "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos'
 )
 p.add_argument(
-    "--file_id",
+    "--id",
     type=int,
-    help='Primary lepton final state, choose "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos'
+    help='IF of the injection file'
 )
 p.add_argument(
     "--workers",
     type=int,
-    help="Choose amount of workers"
+    help="Amount of workers"
     )
 p.add_argument(
     "--events_per_worker",
@@ -46,15 +46,15 @@ p.add_argument(
     )
 p.add_argument(
     "--energy",
-    choices=["high", "low"],
-    default="low",
+    choices=["upper", "lower"],
+    default="lower",
     help='Whether to propagate for higher or lower than 1 PeV'
 )
 args = p.parse_args()
 
-REPO_ROOT = Path("/prometheusLink")
+REPO_ROOT = Paths.home()/prometheus
 DB_PATH = "jobs.db"
-H5_FILE = f"/prometheusLink/output/{args.flavor}/injection_files/{args.file_id}_LI_output.h5"
+H5_FILE = f"{REPO_ROOT}/output/{args.flavor}/injection_files/{args.file_id}_LI_output.h5"
 
 def simulate_batch(worker_id):
     bin_name = args.energy 
