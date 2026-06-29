@@ -32,7 +32,7 @@ p.add_argument(
 p.add_argument(
     "--id",
     type=int,
-    help='IF of the injection file'
+    help='ID of the injection file'
 )
 p.add_argument(
     "--workers",
