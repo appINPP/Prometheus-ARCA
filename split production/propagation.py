@@ -99,10 +99,8 @@ def simulate_batch(worker_id):
        
         p.propagate(event_ids=event_ids)
         
-        
-        print("DEBUG propagate event_ids:", event_ids)
-        print("DEBUG internal _last_event_ids:", getattr(p, "_last_event_ids", None))
-        
+        #print("DEBUG propagate event_ids:", event_ids)
+        #print("DEBUG internal _last_event_ids:", getattr(p, "_last_event_ids", None))
         
         p.construct_output()
         
