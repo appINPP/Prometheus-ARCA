@@ -23,7 +23,7 @@ def insert_events(db_path, energies, threshold):
     c.execute("DELETE FROM events")
     
     for i, E in enumerate(energies):
-        bin_name = "low" if E < threshold else "high"
+        bin_name = "lower" if E < threshold else "upper"
 
         c.execute("""
         INSERT OR REPLACE INTO events (id, energy, bin, status)
