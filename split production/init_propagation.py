@@ -29,7 +29,7 @@ ENERGY_THRESHOLD = 1e6  # 1 PeV
 def prepare():
     print(f"Reading energies from {H5_FILE}...")
     with h5py.File(H5_FILE, "r") as f:
-        energies = f["RangedInjector0"]["properties"]["totalEnergy"][:]
+        energies = f["VolumeInjector0"]["properties"]["totalEnergy"][:]
     
     print(f"Found {len(energies)} events. Initializing Database...")
     init_db(DB_PATH)
