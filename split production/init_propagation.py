@@ -14,7 +14,7 @@ p.add_argument(
     help='Primary lepton final state, choose "MuMinus" for muon neutrinos or "NuEbar" for electron antineutrinos'
 )
 p.add_argument(
-    "--file_id",
+    "--id",
     type=int,
     help='Number used for file identification'
 )
