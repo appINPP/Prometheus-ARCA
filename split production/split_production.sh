@@ -40,7 +40,7 @@ echo "Injecting..."
 
 python injection.py --workers 1 --events_per_worker "$EVENTS" --flavor "$FLAVOR" 
 
-INJ_FILE=$(find /home/username/prometheus/"$FLAVOR"/injection_files/ -name "*_LI_output.h5" -mmin -5 | head -n 1)
+INJ_FILE=$(find /home/username/prometheus/output/"$FLAVOR"/injection_files/ -name "*_LI_output.h5" -mmin -5 | head -n 1)
 
 if [ -z "$INJ_FILE" ]; then
     echo "ERROR: No injection file was created. Stopping pipeline."
