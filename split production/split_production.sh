@@ -6,66 +6,90 @@ FLAVOR="MuMinus"
 ENERGY="lower"
 
 while [[ $# -gt 0 ]]; do
-  case $1 in
-    --workers)
-      WORKERS="$2"
-      shift 2 
-      ;;
-    --total_events)
-      EVENTS="$2"
-      shift 2 
-      ;;
-    --flavor)
-      FLAVOR="$2"
-      shift 2 
-      ;;
-    --energy)
-      ENERGY="$2"
-      shift 2 
-      ;;
-    *)
-      echo "Unknown argument: $1"
-      exit 1
-      ;;
-  esac
+  case $1 in
+    --workers)
+      WORKERS="$2"
+      shift 2 
+      ;;
+    --total_events)
+      EVENTS="$2"
+      shift 2 
+      ;;
+    --flavor)
+      FLAVOR="$2"
+      shift 2 
+      ;;
+    --energy)
+      ENERGY="$2"
+      shift 2 
+      ;;
+    *)
+      echo "Unknown argument: $1"
+      exit 1
+      ;;
+  esac
 done
 
 # Quick safety check
 if [ -z "$WORKERS" ] || [ -z "$EVENTS" ]; then
-    echo "ERROR: Missing required arguments! Use: --events A (--workers B --flavor MuMinus/NuEbar --energy lower/upper)"
-    exit 1
+    echo "ERROR: Missing required arguments! Use: --total_events A --workers B (--flavor MuMinus/NuEbar --energy lower/upper)"
+    exit 1
 fi
+
+INJ_BATCH=1000
+LOW_BATCH=500
+HIGH_BATCH=120
 
 echo "Injecting..."
 
-python injection.py --workers 1 --events_per_worker "$EVENTS" --flavor "$FLAVOR" 
+INJ_START=$(date +%s)
+CHUNK=$((INJ_BATCH*WORKERS))
 
-INJ_FILE=$(find /home/username/prometheus/output/"$FLAVOR"/injection_files/ -name "*_LI_output.h5" -mmin -5 | head -n 1)
+while [ $EVENTS -ge $CHUNK ]; do
+  python injection.py --workers "$WORKERS" --events_per_worker "$INJ_BATCH" --flavor "$FLAVOR" 
+  EVENTS=$((EVENTS-CHUNK))
+done
 
-if [ -z "$INJ_FILE" ]; then
-    echo "ERROR: No injection file was created. Stopping pipeline."
-    exit 1
+if [ $EVENTS -ge $INJ_BATCH ]; then
+  python injection.py --workers "$((EVENTS/INJ_BATCH))" --events_per_worker "$INJ_BATCH" --flavor "$FLAVOR"
 fi
 
-ID=$(echo "$INJ_FILE" | tr -dc '0-9')
+if [ $((EVENTS%INJ_BATCH)) -ne 0 ]; then
+  python injection.py --workers 1 --events_per_worker "$((EVENTS%INJ_BATCH))" --flavor "$FLAVOR"
+fi
 
-echo "Injection Complete! File ID: $ID" 
+INJ_FILES=$(find /home/username/prometheus/output/"$FLAVOR"/injection_files/ -name "*_LI_output.h5" -newermt "@$INJ_START")
 
-python init_propagation.py --flavor "$FLAVOR" --id "$ID"
+if [ -z "$INJ_FILES" ]; then
+    echo "ERROR: No injection file was created. Stopping pipeline."
+    exit 1
+fi
 
-echo "Job distributor ready for low energy production!"
+IDS=()
+for file in $INJ_FILES; do
+    filename=$(basename "$file")
+    id=$(echo "$filename" | cut -d'_' -f1)
+    if [ -n "$id" ]; then
+        IDS+=("$id")
+    fi
+done
 
-EVENTS_PER=$(($EVENTS / $WORKERS))
+echo "Injection Complete! ${#IDS[@]} Files. IDs: ${IDS[*]}" 
 
-python propagation.py --workers "$WORKERS" --events_per_worker "$EVENTS_PER" --flavor "$FLAVOR" --id "$ID"
-
-echo "Low energy production done!"
+for ID in "${IDS[@]}"; do
+  echo "Propagation stage for injection file $ID..."
+  
+  python init_propagation.py --flavor "$FLAVOR" --id "$ID"
+  echo "Job distributor ready for low energy production!"
+  
+  python propagation.py --workers "$WORKERS" --events_per_worker "$LOW_BATCH" --flavor "$FLAVOR" --id "$ID"
+  echo "Low energy production done for file $ID!"
+done 
 
 if [ "$ENERGY" = "upper" ]; then
-        echo "Producing high energy events..."
-        python propagation.py --workers "$WORKERS" --events_per_worker "$EVENTS_PER" --flavor "$FLAVOR" --id "$ID" --energy "$ENERGY"
-        echo "High energy production done!"
+        for ID in "${IDS[@]}"; do
+          echo "Producing high energy events for injection file $ID..."
+          python propagation.py --workers "$WORKERS" --events_per_worker "$HIGH_BATCH" --flavor "$FLAVOR" --id "$ID" --energy "$ENERGY"
+          echo "High energy production done!"
+        done
 fi
-
-
-
