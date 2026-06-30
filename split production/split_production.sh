@@ -45,16 +45,16 @@ echo "Injecting..."
 INJ_START=$(date +%s)
 CHUNK=$((INJ_BATCH*WORKERS))
 
-while [ $EVENTS -ge $CHUNK ]; do
+while [ "$EVENTS" -ge "$CHUNK" ]; do
   python injection.py --workers "$WORKERS" --events_per_worker "$INJ_BATCH" --flavor "$FLAVOR" 
   EVENTS=$((EVENTS-CHUNK))
 done
 
-if [ $EVENTS -ge $INJ_BATCH ]; then
+if [ "$EVENTS" -ge "$INJ_BATCH" ]; then
   python injection.py --workers "$((EVENTS/INJ_BATCH))" --events_per_worker "$INJ_BATCH" --flavor "$FLAVOR"
 fi
 
-if [ $((EVENTS%INJ_BATCH)) -ne 0 ]; then
+if [ "$((EVENTS%INJ_BATCH))" -ne 0 ]; then
   python injection.py --workers 1 --events_per_worker "$((EVENTS%INJ_BATCH))" --flavor "$FLAVOR"
 fi
 
