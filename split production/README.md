@@ -37,4 +37,16 @@ split_production.sh handles the above pipeline automatically. Once again, argume
 + amount of workers (--workers)
 + total number of events (--total_events)
 + event type (--flavor)
-+ whether we want to propagate for the "lower" energy range (default) or for "upper" as well
++ propagation energy range (--energy), "upper", "lower" (default) or "full". 
+
+Each worker handles up to 1K events for the injection, 500 for the lower energy propagation and 120 for the upper.
+
+You may run the script in the background and keep the screen output in split.log as the example down below:
+
+```bash
+nohup ./split_production.sh --total_events 50000 --workers 40 --flavor MuMinus --energy lower > split.log 2>&1 &
+```
+
+## ✩ Additional Code
+In addition to the codes above, concatenate.py handles the simulation parquet files by concatenating them in one. The code will then ask whether to delete the original files.
+
