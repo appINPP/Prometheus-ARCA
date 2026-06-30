@@ -77,19 +77,18 @@ done
 echo "Injection Complete! ${#IDS[@]} Files. IDs: ${IDS[*]}" 
 
 for ID in "${IDS[@]}"; do
-  echo "Propagation stage for injection file $ID..."
-  
-  python init_propagation.py --flavor "$FLAVOR" --id "$ID"
-  echo "Job distributor ready for low energy production!"
-  
-  python propagation.py --workers "$WORKERS" --events_per_worker "$LOW_BATCH" --flavor "$FLAVOR" --id "$ID"
-  echo "Low energy production done for file $ID!"
-done 
+    echo "Propagation stage for injection file $ID..."
+    python init_propagation.py --flavor "$FLAVOR" --id "$ID"
+    
+    if [ "$ENERGY" = "lower" ] || [ "$ENERGY" = "full" ]; then
+              echo "Starting low energy production!"
+              python propagation.py --workers "$WORKERS" --events_per_worker "$LOW_BATCH" --flavor "$FLAVOR" --id "$ID" --energy lower
+              echo "Low energy production done for file $ID!"
+    fi
 
-if [ "$ENERGY" = "upper" ]; then
-        for ID in "${IDS[@]}"; do
-          echo "Producing high energy events for injection file $ID..."
-          python propagation.py --workers "$WORKERS" --events_per_worker "$HIGH_BATCH" --flavor "$FLAVOR" --id "$ID" --energy "$ENERGY"
-          echo "High energy production done!"
-        done
-fi
+    if [ "$ENERGY" = "upper" ] || [ "$ENERGY" = "full" ]; then
+              echo "Starting high energy production!"
+              python propagation.py --workers "$WORKERS" --events_per_worker "$HIGH_BATCH" --flavor "$FLAVOR" --id "$ID" --energy upper
+              echo "High energy production done for file $ID!"
+    fi
+done
