@@ -147,8 +147,11 @@ def init_worker():
     process = multiprocessing.current_process()
     worker_idx = process._identity[0] - 1
 
-    # Pin worker to one CPU core
-    os.sched_setaffinity(0, {worker_idx})
+    allowed = sorted(os.sched_getaffinity(0))
+    cpu = allowed[worker_idx % len(allowed)]
+
+    os.sched_setaffinity(0, {cpu})
+    print(f"Worker {worker_idx} pinned to CPU {cpu}")
 
 if __name__ == "__main__":
     start_time = time.time()
