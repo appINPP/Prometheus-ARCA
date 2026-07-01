@@ -112,12 +112,12 @@ def simulate_batch(worker_id):
 def init_worker():
     process = multiprocessing.current_process()
     worker_idx = process._identity[0] - 1
-    try:
-        os.sched_setaffinity(0, {worker_idx})
-        print(f"Worker {worker_idx} pinned to Core {worker_idx}")
-    except AttributeError:
-        # sched_setaffinity is Linux-only
-        pass
+
+    allowed = sorted(os.sched_getaffinity(0))
+    cpu = allowed[worker_idx % len(allowed)]
+
+    os.sched_setaffinity(0, {cpu})
+    print(f"Worker {worker_idx} pinned to CPU {cpu}")
 
 if __name__ == "__main__":
     n_workers = args.workers 
