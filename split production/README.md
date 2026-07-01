@@ -10,7 +10,7 @@ This pipeline uses a job distributor based on the energy threshold of 1 PeV, for
 ### injection.py
 is responsible for the injection stage and handles the same arguments as [batches_production.py](../README.md###batches_production.py). 
 
-Injection files are stored in prometheus/output/<flavor>/injection_files.
+Injection files are stored in prometheus/output/flavor/injection_files.
 
 ### init_propagation.py
 initialises the event database and prepares the propagation stage by filtering injected events into upper and lower energy bins. It reads the corresponding injection file based on the:
@@ -29,7 +29,7 @@ The following arguments handle the:
 + number of events per worker (--events_per_worker)
 + energy (--energy), "lower" or "upper" to choose to propagate events corresponding to less or more than 1 PeV respectively
 
-The resulting simulation data is written in parquet format under prometheus/output/<flavor>/simulation_files.
+The resulting simulation data is written in parquet format under prometheus/output/flavor/simulation_files.
 
 ## ✩ Automation
 
