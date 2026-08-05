@@ -3,8 +3,8 @@
 This folder contains codes for paralellised simulation production. 
 
 There are two modes: 
-+ `batches_production`, the first and currently most stable version
-+ `split_production`, meant to filter which events get propagated by a neutrino energy threshold for more production efficiency. More details in the respective folder.
++ batches_production, the first and currently most stable version
++ split_production, meant to filter which events get propagated by a neutrino energy threshold for more production efficiency. More details in the respective folder.
 
 ## ✩ Configuration Choices
 
@@ -22,7 +22,7 @@ The latter decision was due to the fact that RangedInjection only produced 10-15
 
 ## ✩ batches_production.py
 
-Generates neutrino simulations in parallel batches. The simulated events are written in Parquet format to the Prometheus output directory, under 'batch/simulation_files/'
+Generates neutrino simulations in parallel batches. The simulated events are written in Parquet format to the Prometheus output directory, under `batch/simulation_files/`. 
 
 ### Command-line arguments
 
