@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 #path to the original arca file
-REPO_ROOT = Path("/prometheusLink")
+REPO_ROOT = Path("/prometheus")
 arca=str(REPO_ROOT/"resources"/"geofiles"/"arca.geo")
 
 parser = argparse.ArgumentParser(description="Load the geometry file")
