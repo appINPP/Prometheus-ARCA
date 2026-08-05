@@ -1,6 +1,6 @@
 # Prometheus-ARCA
 
-This repository contains supplementary codes for the **Prometheus** neutrino simulation framework, adapted for ARCA.
+This repository contains supplementary codes for the Prometheus neutrino simulation framework, adapted for ARCA.
 
 It is organised into three main components:
 
