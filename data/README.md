@@ -12,4 +12,4 @@ To validate the simulation output we may use:
 + **ph_histograms.py**, creates histograms on the data from a single photons file.
 
 ## ✩ Limitations/Future Work
-+ datatognn.py doesn't work because of an wkward extension. This either requires a workaround or a change in how photons files are written (i.e. disabling the extension while writing the files). Otherwise we may keep mc_truth and features separately and move them like that to the GNN. This requires further work.
++ datatognn.py doesn't work because of an wkward extension. This either requires a workaround or a change in how photons files are written (i.e. disabling the extension while writing the files). Otherwise we may keep mc_truth and features separately and move them like that to the GNN. This requires further work. FIXED will be uploaded shortly.
