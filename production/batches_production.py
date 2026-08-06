@@ -21,6 +21,7 @@ from pathlib import Path
 from prometheus import Prometheus, config
 import argparse
 import gc
+import jax 
 
 # Prefer CPU JAX when available
 try:
@@ -31,7 +32,7 @@ except Exception:
     pass
 
 # Paths
-REPO_ROOT = Path("/prometheusLink")
+REPO_ROOT = Path("/prometheus")
 output_base = REPO_ROOT / "output"
 output_base.mkdir(exist_ok=True)
 
@@ -98,16 +99,15 @@ if args.total_events is not None:
     events_per_worker = int(int(args.total_events) / n_workers)
 else:
     events_per_worker = int(args.events_per_worker)
-
-# Detector Setup
-geofile= str(REPO_ROOT / "resources" / "geofiles" / "arca.geo")
-config.detector.geo_file = geofile
-
 def simulate_batch(settings):
     id, n_events = settings
     
+    from prometheus import Prometheus, config
+    # detector setup
+    geofile= str((REPO_ROOT / "resources" / "geofiles" / "arca.geo").resolve())
+    config.detector.geo_file = geofile
     # Output Location
-    run_dir = output_base / f"f_{args.flavor}-{id}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
+    run_dir = output_base / f"f_{args.flavor}-{id}-en_{args.energy}"
     run_dir.mkdir(exist_ok=True)
         
     config.run.storage_prefix = str(run_dir)
@@ -138,48 +138,56 @@ def simulate_batch(settings):
     injection_config.simulation.maximal_energy = emax
     injection_config.simulation.power_law = 1.4
     
-    if args.flavor=="NuEBar":
-        injection_config.simulation.is_ranged = False
-        injection_config.cylinder_radius = 805 
-        injection_config.cylinder_height = 1404 
-    
+    injection_config.simulation.is_ranged = False
+    injection_config.cylinder_radius = 805 
+    injection_config.cylinder_height = 3500 
+
     # final_state_1 either MuMinus or NuEBar
     injection_config.simulation.final_state_1= args.flavor
     injection_config.simulation.final_state_2= "Hadrons"
     
     print(f"[Worker {id}] starting simulation")
-    
     prometheus = Prometheus()
     prometheus.sim()
-    
     print(f"[Simulation saved in {str(run_dir)}]")
     del prometheus
     gc.collect()
+    jax.clear_caches() #jax cleanup
+    try:
+        libc = ctypes.CDLL("libc.so.6")
+        libc.malloc_trim(0)               #C cleanup
+    except Exception:
+        pass
     return (id,n_events)
 
 import multiprocessing
+
 def init_worker():
     process = multiprocessing.current_process()
     worker_idx = process._identity[0] - 1
 
-    # Pin worker to one CPU core
-    os.sched_setaffinity(0, {worker_idx})
+    allowed = sorted(os.sched_getaffinity(0))
+    cpu = allowed[worker_idx % len(allowed)]
+
+    os.sched_setaffinity(0, {cpu})
+    print(f"Worker {worker_idx} pinned to CPU {cpu}")
+
 
 if __name__ == "__main__":
     start_time = time.time()
     
     # Checks if this combination of no of workers/events has been done before and changes the seed
-    check=0
-    run_dir = output_base / f"f_{args.flavor}-{check}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
+    check=1002160
+    run_dir = output_base / f"f_{args.flavor}-{check}-en_{args.energy}"
     while run_dir.exists():
         check+=n_workers
-        run_dir = output_base / f"f_{args.flavor}-{check}-w_{n_workers}-ev_{events_per_worker}-en_{args.energy}-zen_{args.zenith}"
+        run_dir = output_base / f"f_{args.flavor}-{check}-en_{args.energy}"
 
     pool_inputs = [(check+i, events_per_worker) for i in range(n_workers)]
     
     print(f"Spawning pool with {n_workers} workers...")
     
-    with Pool(processes=n_workers, initializer=init_worker, maxtasksperchild=1) as pool:
+    with Pool(processes=n_workers, initializer=init_worker) as pool:
         results = pool.map(simulate_batch, pool_inputs)
         
     instances_total = sum(events for worker_id, events in results)
@@ -190,4 +198,4 @@ if __name__ == "__main__":
         "simulated %s events in %s minutes using %s workers. \n Time per event per core is: %s sec"
         % (instances_total, time_diff, n_workers, (instances_total / n_workers) / time_diff)
     )
-    
+
