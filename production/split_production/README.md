@@ -17,7 +17,9 @@ The need for Version 2 came to be after Version 1 was verified it caused RAM acc
 Version 1 has further documentation inside the folder (useful for understanding both versions) as it was meant to be the chosen workflow for production. Version 2 has not been validated and the scripts are taken as they were. In the validation folders there are additional scripts that could be used to test Version 2 (unpolished). 
 
 ## ✩ Suggestions for future work
+As these versions developed on batches_production.py, issues from there are inherited here.
 + Neither version follows the correct os.environment (by order) as it was set in batches_production.py. That should be implemented correctly.
 + Neither version clears up C/C++ and JAX memory as seen, again, in batches_production.py. This might be trivial for Version 2 since workers spawn and die repeatedly, but will surely make a difference for Version 1.
-+ Both versions use the old method to avoid using the same random seed between independent productions. This causes bugs in the long run and should be changed to what batches_production.py currently utilises. 
++ Both versions use the old method to avoid using the same random seed between independent productions. This causes bugs in the long run and should be changed.
++ Both versions would benefit from a non-manual selection of number of workers.
 + Validation of functionality of Version 2. Given that works, the automation script of Version 1 can be used as it is. Split production could be used as the default production workflow.
