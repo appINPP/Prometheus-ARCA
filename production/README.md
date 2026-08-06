@@ -37,6 +37,8 @@ Generates neutrino simulations in parallel batches. The simulated events are wri
 
 ## ✩ Limitations/Future Work
 + batches_production.py, raises errors for VolumeInjection method. GENIE should be tested instead.
++ batches_production's way of handling the seed is not safe. If there are gaps in the already existing output files, simulations will use already done seeds and be overwritten. A better version would be to check the largest int in the files IDs.
 + in batches_production.py, RAM retention by active workers should be monitored, with and without maxtaskperchild set to 1.
++ batches_production.py would benefit from a non-manual choice of workers. An application like this can be found in `data/photonstoparquet.py`
 + switch to split_production as the main production workflow, after validation
 
