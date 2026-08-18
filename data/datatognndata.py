@@ -17,22 +17,35 @@ logger = logging.getLogger(__name__)
 # Configuration
 # ===========================================================================
 REPO_ROOT = Path.home() / "prometheus"
-FOLDER_A = REPO_ROOT / "output" / "30jul"
-FOLDER_B = REPO_ROOT / "output" / "augpulses"
-OUTPUT_DIR = REPO_ROOT / "output" / "forgnn"
+FOLDER_A = REPO_ROOT / "output" / "50Kendofinternship"/"30jul"
+FOLDER_B = REPO_ROOT / "output" / "50Kendofinternship"/ "augpulses"
+OUTPUT_DIR = REPO_ROOT / "output" / "50Kendofinternship"/"bananoippokampos"
 
-# Columns to extract from disk (supports dot-notation for nested fields)
-COLS_FILE_A = ["mc_truth.initial_state_energy"]
-COLS_FILE_B = ["sensor_pos_x", "sensor_pos_y", "sensor_pos_z", "pmt_dir_x", "pmt_dir_y", "pmt_dir_z", "tot_ns"]
+# Columns to extract from disk
+COLS_FILE_A = ["mc_truth"]
+COLS_FILE_B = [
+    "sensor_pos_x",
+    "sensor_pos_y",
+    "sensor_pos_z",
+    "pmt_dir_x",
+    "pmt_dir_y",
+    "pmt_dir_z",
+    "tot_ns",
+    "fadc_q"
+]
+
+# Specify which nested fields from mc_truth you want to include in the output.
+# Set to None or [] if you want to include ALL subfields under mc_truth.
+MC_TRUTH_FIELDS_TO_KEEP = ["initial_state_energy","final_state_energy"]
 
 # Primary column in File B used to check if a row/event is empty
-# (e.g., if 'count' has 0 items or is None, the row is treated as empty)
 CHECK_EMPTY_COL_B = "tot_ns"
 
 # Transformations
-LOG10_COLUMN = "initial_state_energy"  # Evaluated on the un-nested field
+LOG10_COLUMNS = ["initial_state_energy", "final_state_energy"]  # Evaluated on the un-nested field
 RENAME_MAP = {
     "initial_state_energy": "logE_nu",
+    "final_state_energy": "logE_mu",
     "sensor_pos_x": "hit_pos_x",
     "sensor_pos_y": "hit_pos_y",
     "sensor_pos_z": "hit_pos_z",
@@ -44,6 +57,7 @@ RENAME_MAP = {
 
 
 # Helper Functions
+
 
 def extract_id(filename: str) -> str | None:
     """Extracts a numerical ID from a filename (e.g., 'run_101_a.parquet' -> '101')."""
@@ -58,11 +72,6 @@ def process_file_pair(task_args: tuple[Path, Path, str]) -> str:
     """Processes a pair of parquet files, dropping rows where File B is empty."""
     file_a, file_b, file_id = task_args
     output_file = OUTPUT_DIR / f"combined_{file_id}.parquet"
-    
-
-    metadata = ak.metadata_from_parquet(str(file_a))
-    print(metadata.form.columns())
-
 
     # Skip if output already exists (allows resuming interrupted runs)
     if output_file.exists():
@@ -107,36 +116,101 @@ def process_file_pair(task_args: tuple[Path, Path, str]) -> str:
         # -------------------------------------------------------------------
         combined_fields = {}
 
-        # Extract fields from Folder A (automatically un-nest 'mc_truth' if present)
+        # Extract specified nested fields from mc_truth
         if "mc_truth" in ak.fields(arr_a):
             mc_struct = arr_a["mc_truth"]
-            for subfield in ak.fields(mc_struct):
+            available_subfields = ak.fields(mc_struct)
+
+            # Determine which subfields to extract
+            if MC_TRUTH_FIELDS_TO_KEEP:
+                target_subfields = [
+                    f for f in MC_TRUTH_FIELDS_TO_KEEP if f in available_subfields
+                ]
+                missing = set(MC_TRUTH_FIELDS_TO_KEEP) - set(target_subfields)
+                if missing:
+                    logger.warning(
+                        f"ID {file_id}: Specified mc_truth fields not found: {missing}"
+                    )
+            else:
+                target_subfields = available_subfields
+
+            # Extract selected subfields
+            for subfield in target_subfields:
                 combined_fields[subfield] = mc_struct[subfield]
         else:
+            # Fallback if mc_truth was already un-nested in input
             for field in ak.fields(arr_a):
-                combined_fields[field] = arr_a[field]
+                if not MC_TRUTH_FIELDS_TO_KEEP or field in MC_TRUTH_FIELDS_TO_KEEP:
+                    combined_fields[field] = arr_a[field]
+        
+        if "final_state_energy" in combined_fields:
+           combined_fields["final_state_energy"] = (
+            combined_fields["final_state_energy"][:, 0]
+            )
 
         # Extract fields from Folder B
         for field in ak.fields(arr_b):
             combined_fields[field] = arr_b[field]
 
-        # Generate user_id for remaining valid events (0, 1, 2, ..., N-1)
+        # Generate evt_id for remaining valid events (0, 1, 2, ..., N-1)
         combined_fields["evt_id"] = np.arange(n_valid_events)
+        
+        combined_fields["pseudo_runid"] = [file_id] * n_valid_events
 
-        # Add the unique file ID key column
-        combined_fields["pseudo_runid"] = file_id
-
-        # Apply Log10 transformation vectorially
-        if LOG10_COLUMN in combined_fields:
-            data = combined_fields[LOG10_COLUMN]
-            safe_data = ak.where(data > 0, data, np.nan)
-            combined_fields[LOG10_COLUMN] = np.log10(safe_data)
+        for column in LOG10_COLUMNS:
+            if column in combined_fields:
+                data = combined_fields[column]
+                safe_data = ak.where(data > 0, data, np.nan)
+                combined_fields[column] = np.log10(safe_data)
 
         # Apply field renames
         final_fields = {}
         for old_name, field_array in combined_fields.items():
             new_name = RENAME_MAP.get(old_name, old_name)
             final_fields[new_name] = field_array
+
+
+        # -------------------------------------------------------------------
+        # Flatten inner hit_tot lists while repeating corresponding hit fields
+        # -------------------------------------------------------------------
+
+        # Index of each outer hit within each event:
+        hit_indices = ak.local_index(final_fields["hit_tot"], axis=1)
+
+        hit_indices = ak.flatten(
+            ak.broadcast_arrays(
+                hit_indices,
+                final_fields["hit_tot"]
+            )[0],
+            axis=2
+        )
+
+        # Repeat the outer hit-level fields according to hit_tot's inner lists
+        REPEAT_FIELDS = [
+            "hit_pos_x",
+            "hit_pos_y",
+            "hit_pos_z",
+            "hit_dir_x",
+            "hit_dir_y",
+            "hit_dir_z",
+        ]
+
+        for field in REPEAT_FIELDS:
+            final_fields[field] = final_fields[field][hit_indices]
+
+        # Flatten hit_tot itself
+        final_fields["hit_tot"] = ak.flatten(
+            final_fields["hit_tot"],
+            axis=2
+        )
+
+        # fadc_q: if it has the same [[...], [...]] structure as hit_tot
+        if "fadc_q" in final_fields:
+            final_fields["fadc_q"] = ak.flatten(
+                final_fields["fadc_q"],
+                axis=2
+            )
+
 
         # Save output Parquet file
         out_array = ak.Array(final_fields)
@@ -157,6 +231,7 @@ def process_file_pair(task_args: tuple[Path, Path, str]) -> str:
 
 # Dynamic Worker Count Calculation
 
+
 def get_safe_worker_count(estimated_ram_per_worker_gb: float = 2.0) -> int:
     """Calculates maximum parallel worker processes based on system resources."""
     cpu_cores = os.cpu_count() or 4
@@ -174,7 +249,9 @@ def get_safe_worker_count(estimated_ram_per_worker_gb: float = 2.0) -> int:
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(levelname)s: %(message)s"
+    )
 
     if not FOLDER_A.exists() or not FOLDER_B.exists():
         logger.error("One or both input directories do not exist.")
